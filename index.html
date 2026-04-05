@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ReachRain — Гриф сервер Minecraft</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #eef2ff;
+            line-height: 1.5;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #0a0a1a, #010005);
+        }
+
+        /* АНИМАЦИОННЫЙ ФОН — очень плавное движение */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(circle at 20% 30%, #0a0a1a, #010005);
+            overflow: hidden;
+        }
+
+        .moving-gradient {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle at 30% 40%, rgba(43, 110, 240, 0.12), rgba(123, 197, 255, 0.04), transparent 75%);
+            animation: ultraSlowDrift 45s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes ultraSlowDrift {
+            0% { transform: translate(0%, 0%) rotate(0deg) scale(1); }
+            33% { transform: translate(3%, 2%) rotate(3deg) scale(1.05); }
+            66% { transform: translate(-2%, 4%) rotate(6deg) scale(1.02); }
+            100% { transform: translate(0%, 0%) rotate(0deg) scale(1); }
+        }
+
+        /* Плавные частицы */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(123, 197, 255, 0.35), rgba(43, 110, 240, 0.08));
+            border-radius: 50%;
+            pointer-events: none;
+            animation: floatParticleVerySlow 28s infinite cubic-bezier(0.45, 0, 0.55, 1);
+            filter: blur(1px);
+        }
+
+        @keyframes floatParticleVerySlow {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0.8);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.3;
+            }
+            85% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-20vh) translateX(var(--x-shift)) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Звёзды */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: softTwinkle 6s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+
+        @keyframes softTwinkle {
+            0% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.08); }
+            100% { opacity: 0.1; transform: scale(1); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #7bc5ff 40%, #2a6eff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            background-size: 200% auto;
+            animation: verySlowShine 12s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+        }
+
+        @keyframes verySlowShine {
+            0% { background-position: 0% center; }
+            50% { background-position: 100% center; }
+            100% { background-position: 0% center; }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: ultraGentleDown 1.4s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+        }
+
+        @keyframes ultraGentleDown {
+            from { opacity: 0; transform: translateY(-25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            font-size: 5.5rem;
+            font-weight: 800;
+            letter-spacing: 6px;
+            margin-bottom: 0.5rem;
+            transition: text-shadow 0.6s cubic-bezier(0.2, 0.9, 0.4, 1);
+        }
+
+        .logo:hover {
+            text-shadow: 0 0 20px rgba(123, 197, 255, 0.4);
+        }
+
+        .logo span:first-child {
+            color: white;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+            display: inline-block;
+            animation: gentleLetterFloat 1.2s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+        }
+
+        .logo span:last-child {
+            background: linear-gradient(145deg, #7bc5ff, #2a6eff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            animation: gentleLetterFloat 1.2s cubic-bezier(0.2, 0.8, 0.4, 1) 0.15s forwards;
+        }
+
+        @keyframes gentleLetterFloat {
+            0% { opacity: 0; transform: translateY(15px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #9bbdf0;
+            margin-top: 0.5rem;
+            animation: ultraGentleUp 1.4s cubic-bezier(0.2, 0.9, 0.3, 1) 0.2s forwards;
+            opacity: 0;
+        }
+
+        @keyframes ultraGentleUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(10, 20, 35, 0.55);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(60, 145, 230, 0.25);
+            padding: 1.8rem;
+            margin-bottom: 2rem;
+            transition: all 0.7s cubic-bezier(0.2, 0.9, 0.3, 1);
+            animation: cardGentleRise 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+        }
+
+        .card:hover {
+            border-color: rgba(123, 197, 255, 0.5);
+            box-shadow: 0 15px 35px rgba(60, 145, 230, 0.12);
+            transform: translateY(-6px);
+            backdrop-filter: blur(16px);
+        }
+
+        @keyframes cardGentleRise {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:nth-child(1) { animation-delay: 0.08s; }
+        .card:nth-child(2) { animation-delay: 0.18s; }
+        .card:nth-child(3) { animation-delay: 0.28s; }
+
+        .btn {
+            display: inline-block;
+            padding: 0.9rem 2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.5s cubic-bezier(0.2, 0.9, 0.4, 1);
+            font-size: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-discord {
+            background: linear-gradient(95deg, #5865F2, #7bc5ff);
+            color: white;
+            box-shadow: 0 4px 20px rgba(88, 101, 242, 0.25);
+        }
+
+        .btn-discord:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(88, 101, 242, 0.35);
+        }
+
+        .btn-ip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1.5px solid rgba(60, 145, 230, 0.45);
+            color: #cce6ff;
+        }
+
+        .btn-ip:hover {
+            background: rgba(43, 110, 240, 0.2);
+            border-color: #7bc5ff;
+            transform: translateY(-3px);
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .rule-section {
+            background: rgba(0, 0, 0, 0.32);
+            border-radius: 20px;
+            padding: 1.2rem;
+            transition: all 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+            animation: ruleGentleSlide 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+        }
+
+        .rule-section:hover {
+            background: rgba(0, 0, 0, 0.48);
+            transform: translateX(4px);
+        }
+
+        @keyframes ruleGentleSlide {
+            from { opacity: 0; transform: translateX(-18px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .rule-section:nth-child(1) { animation-delay: 0.03s; }
+        .rule-section:nth-child(2) { animation-delay: 0.08s; }
+        .rule-section:nth-child(3) { animation-delay: 0.13s; }
+        .rule-section:nth-child(4) { animation-delay: 0.18s; }
+        .rule-section:nth-child(5) { animation-delay: 0.23s; }
+        .rule-section:nth-child(6) { animation-delay: 0.28s; }
+        .rule-section:nth-child(7) { animation-delay: 0.33s; }
+
+        .rule-section h3 {
+            color: #7bc5ff;
+            margin-bottom: 0.8rem;
+            font-size: 1.3rem;
+            border-left: 3px solid #2a6eff;
+            padding-left: 0.8rem;
+        }
+
+        .rule-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .rule-section li {
+            margin-bottom: 0.6rem;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+
+        .rule-section li::before {
+            content: "▸";
+            color: #7bc5ff;
+            position: absolute;
+            left: 0;
+            opacity: 0.7;
+        }
+
+        .punish-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .punish-table th,
+        .punish-table td {
+            padding: 0.7rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(60, 145, 230, 0.2);
+        }
+
+        .punish-table tr {
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+        }
+
+        .punish-table tr:hover {
+            background: rgba(123, 197, 255, 0.05);
+        }
+
+        .punish-table th {
+            color: #7bc5ff;
+            font-weight: 600;
+        }
+
+        .server-info {
+            text-align: center;
+            margin: 2rem 0;
+            animation: ultraGentleUp 1.4s cubic-bezier(0.2, 0.9, 0.3, 1) 0.3s forwards;
+            opacity: 0;
+        }
+
+        .ip-box {
+            background: rgba(10, 18, 34, 0.8);
+            backdrop-filter: blur(8px);
+            border-radius: 60px;
+            padding: 0.9rem 2rem;
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(42, 110, 255, 0.35);
+            transition: all 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+        }
+
+        .ip-box:hover {
+            border-color: rgba(123, 197, 255, 0.6);
+            box-shadow: 0 0 18px rgba(123, 197, 255, 0.08);
+        }
+
+        .ip-item {
+            font-family: monospace;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .copy-btn {
+            background: rgba(123, 197, 255, 0.12);
+            border: none;
+            color: #7bc5ff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 40px;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+            font-weight: 500;
+        }
+
+        .copy-btn:hover {
+            background: rgba(123, 197, 255, 0.28);
+            color: white;
+            transform: scale(1.02);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .warning-banner {
+            margin-top: 1rem;
+            padding: 0.9rem;
+            background: rgba(255, 60, 40, 0.08);
+            border-radius: 16px;
+            text-align: center;
+            font-size: 0.9rem;
+            border-left: 3px solid #ff3c28;
+        }
+
+        .tech-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #8aa5d0;
+        }
+
+        .dev-badge {
+            display: inline-block;
+            background: rgba(123, 197, 255, 0.15);
+            border-radius: 30px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.7rem;
+            color: #7bc5ff;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+            border: 0.5px solid rgba(123, 197, 255, 0.3);
+            animation: softPulse 3s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+
+        @keyframes softPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .private-info {
+            background: linear-gradient(135deg, rgba(43, 110, 240, 0.15), rgba(123, 197, 255, 0.08));
+            border-radius: 20px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            border: 1px solid rgba(123, 197, 255, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(43, 110, 240, 0.25);
+            color: #6a85b0;
+            font-size: 0.8rem;
+            animation: gentleFade 1.6s cubic-bezier(0.2, 0.9, 0.3, 1) 0.5s forwards;
+            opacity: 0;
+        }
+
+        @keyframes gentleFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 700px) {
+            .logo { font-size: 3.5rem; }
+            .rules-grid { grid-template-columns: 1fr; }
+            .ip-box { flex-direction: column; align-items: center; border-radius: 30px; padding: 1.2rem; }
+            .action-buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 260px; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0a0f1e; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #2a6eff, #7bc5ff); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="animated-bg">
+    <div class="moving-gradient"></div>
+</div>
+<div class="stars" id="stars"></div>
+<div class="particles" id="particles"></div>
+
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <span>R</span><span>R</span>
+        </div>
+        <div class="tagline">
+            ⚡ ГРИФ-СЕРВЕР | MINECRAFT ⚡
+        </div>
+    </div>
+
+    <div class="server-info">
+        <div class="ip-box">
+            <span class="ip-item">🎮 Основной адрес: <strong style="color:#7bc5ff;">reachrain.falix.me</strong></span>
+            <span class="ip-item">🔄 Резервный IP: <strong>144.76.72.157:25117</strong></span>
+            <button class="copy-btn" onclick="copyToClipboard('reachrain.falix.me')">📋 Копировать адрес</button>
+            <button class="copy-btn" onclick="copyToClipboard('144.76.72.157:25117')">📋 Копировать IP</button>
+        </div>
+        <div style="margin: 1.5rem 0 0.5rem;">
+            <a href="https://discord.gg/WUBja4g3SX" target="_blank" class="btn btn-discord">💬 Discord сервер</a>
+        </div>
+        <div style="font-size: 0.85rem; color:#6a85b0;">
+            🏴‍☠️ Пираткам вход разрешён
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 class="gradient" style="font-size: 2rem; margin-bottom: 1rem;">📜 Правила сервера ReachRain</h2>
+        
+        <div class="rules-grid">
+            <div class="rule-section">
+                <h3>1. Общие правила</h3>
+                <ul>
+                    <li>Запрещён любой вид читов (X-Ray, killaura, fly, speed и т.д.)</li>
+                    <li>Запрещена реклама других серверов и ресурсов</li>
+                    <li>Запрещены оскорбления на национальной/религиозной почве и угрозы в реальной жизни</li>
+                    <li>Запрещён спам и флуд в чате (в том числе командами)</li>
+                </ul>
+            </div>
+
+            <div class="rule-section">
+                <h3>2. Гриферство ⚠️</h3>
+                <ul>
+                    <li><strong style="color:#7bc5ff;">Гриферить МОЖНО</strong> везде, кроме спавна и зон [SafeZone]</li>
+                    <li><strong style="color:#ff7b5c;">Дюпы — ЗАПРЕЩЕНЫ</strong>. Баги используешь → бан</li>
+                    <li>Лагерь (базу) можно сносить, воровать, взрывать</li>
+                    <li>⚠️ <strong>Динамит не разрушает блоки</strong> — урон есть, но грифер через TNT недоступен</li>
+                </ul>
+            </div>
+
+            <div class="rule-section">
+                <h3>3. Чат</h3>
+                <ul>
+                    <li>Мат разрешён, но не в оскорбительной форме в адрес конкретного человека</li>
+                    <li>Капс не более 3 слов подряд</li>
+                    <li>Флуд командами = мут</li>
+                </ul>
+            </div>
+
+            <div class="rule-section">
+                <h3>4. Технические ограничения</h3>
+                <ul>
+                    <li>Запрещены лаг-машины, краш-чипы, бесконечные циклы</li>
+                    <li>Запрещена постройка «обсидиановых грибов» и нагрузочных конструкций</li>
+                </ul>
+            </div>
+
+            <div class="rule-section">
+                <h3>5. Доступ</h3>
+                <ul>
+                    <li>Сервер — <strong>пиратко-дружественный</strong>. Любой лаунчер</li>
+                    <li>VPN/Proxy разрешены, но за читы/рекламу — бан</li>
+                    <li>
+                        <strong>Версия Minecraft: 1.21.4</strong>
+                        <span class="dev-badge">другие версии в разработке</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="rule-section">
+                <h3>6. Приват (защита территории)</h3>
+                <ul>
+                    <li>🏆 <strong>Ивенты</strong> — участвуй в ивентах и выигрывай приват</li>
+                    <li>💎 <strong>Донат валюта</strong> — можно получить за донат (пополнение проекта)</li>
+                    <li>💰 <strong>Покупка</strong> — приват можно купить (дорого, для тех кто ценит свои постройки)</li>
+                    <li>⚠️ Без привата — базу могут снести другие игроки!</li>
+                </ul>
+            </div>
+
+            <div class="rule-section">
+                <h3>7. Наказания</h3>
+                <table class="punish-table">
+                    <thead><tr><th>Нарушение</th><th>Наказание</th></tr></thead>
+                    <tbody>
+                        <tr><td>Читы</td><td>Бан навсегда</td></tr>
+                        <tr><td>Дюп / лаг-машины</td><td>Бан 14 дней (2 раз — навсегда)</td></tr>
+                        <tr><td>Реклама</td><td>Бан навсегда</td></tr>
+                        <tr><td>Оскорбления / угрозы</td><td>Мут от 1 часа до бана</td></tr>
+                        <tr><td>Спам / флуд</td><td>Мут 30 минут</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="warning-banner">
+            🛡️ <strong>Зона спавна и [SafeZone]</strong> — единственное место, где нельзя гриферить.<br>
+            На всей остальной карте можно ВСЁ!
+        </div>
+    </div>
+
+    <div class="card" style="text-align: center;">
+        <h3 style="font-size: 1.6rem; margin-bottom: 0.8rem;">💀 Готов к хаосу? 💀</h3>
+        <p style="margin-bottom: 1.2rem;">Заходи, разрушай чужие базы, защищай свою — и помни: дюпы и читы = бан.</p>
+        
+        <div class="action-buttons">
+            <a href="https://discord.gg/WUBja4g3SX" target="_blank" class="btn btn-discord">🎮 Discord ReachRain</a>
+            <button class="btn btn-ip" onclick="copyToClipboard('reachrain.falix.me')">📋 Скопировать адрес</button>
+        </div>
+
+        <div class="private-info">
+            🔒 <strong>Как получить приват?</strong> 🔒<br><br>
+            🎁 <strong>Ивенты</strong> — регулярные мероприятия, где можно выиграть приват на территорию<br>
+            💎 <strong>Донат валюта</strong> — поддержка проекта открывает доступ к привату<br>
+            💰 <strong>Покупка привата</strong> — дорогостоящая услуга для тех, кто хочет сохранить свои постройки<br><br>
+            <span style="font-size: 0.85rem; color:#7bc5ff;">Без привата — твоя база может быть разрушена в любой момент!</span>
+        </div>
+
+        <div class="tech-info">
+            🔥 <strong>Техническая информация:</strong> Динамит включён, но НЕ разрушает блоки (только урон по игрокам и мобам)<br>
+            📌 Актуальная версия сервера: <strong>Minecraft 1.21.4</strong> <span class="dev-badge">1.20.x, 1.21.x в разработке</span>
+        </div>
+    </div>
+
+    <footer>
+        ReachRain — гриф сервер. Никаких приватов (только за донат/ивенты), только гриферство и свобода.<br>
+        Белая R + синяя R = символ дождя разрушений. © RR
+    </footer>
+</div>
+
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const msg = document.createElement('div');
+            msg.textContent = '✓ Скопировано: ' + text;
+            msg.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2a6eff; color:white; padding:8px 20px; border-radius:40px; font-size:14px; z-index:9999; opacity:0.9; font-family:sans-serif;';
+            document.body.appendChild(msg);
+            setTimeout(() => {
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 500);
+            }, 2000);
+        }).catch(() => {
+            prompt('Скопируйте вручную:', text);
+        });
+    }
+
+    function createStars() {
+        const starsContainer = document.getElementById('stars');
+        if (!starsContainer) return;
+        for (let i = 0; i < 130; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const size = Math.random() * 2.5 + 0.8;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 8 + 's';
+            star.style.animationDuration = 4 + Math.random() * 6 + 's';
+            starsContainer.appendChild(star);
+        }
+    }
+
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        if (!particlesContainer) return;
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            const size = Math.random() * 5 + 1.5;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.setProperty('--x-shift', (Math.random() - 0.5) * 180 + 'px');
+            particle.style.animationDuration = 20 + Math.random() * 20 + 's';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.opacity = 0.2 + Math.random() * 0.3;
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    // Запускаем всё после полной загрузки DOM
+    document.addEventListener('DOMContentLoaded', function() {
+        createStars();
+        createParticles();
+    });
+</script>
+</body>
+</html>
